@@ -4,6 +4,7 @@
 
 const byte ROWS = 4; 
 const byte COLS = 4; 
+
 const float SINCOSMAX = 1;
 const float SINCOSZERO = 0;
 const float SINCOSMIN = -1;
@@ -25,8 +26,11 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2);
 unsigned long a = 0;
 unsigned long count = 0;
 unsigned int lastDisplay = 0;
+
 float b = 0;
 bool show = false;
+bool modeSinCos = false;
+bool modeTgCtg = false;
 
 enum state
 {
@@ -53,7 +57,6 @@ void loop()
         {
            a = a * 10 + (customKey-'0');
            Display();
-           Serial.println(a);
         }
         else if(customKey=='*')
         {
@@ -76,13 +79,11 @@ void loop()
           {
                b = sinus(a);
                show = true;
-               Serial.println(b);
           }
           else if(Stan == Cosinus)
           {
                b = cosinus(a);
                show = true;
-               Serial.println(b);
           }
           else if(Stan == Tangens)
           {
@@ -90,7 +91,6 @@ void loop()
             {
               b = tangens(a);
               show = true;
-              Serial.println(b);
             }
             else
             {
@@ -103,7 +103,6 @@ void loop()
             {
               b = cotangens(a);
               show = true;
-              Serial.println(b);
             }
             else
             {
@@ -115,37 +114,42 @@ void loop()
         }
         else if(customKey=='A')
         {
-          Stan = Sinus;
+          modeSinCos = !modeSinCos;
+          if(modeSinCos)
+          {
+             Stan = Sinus;            
+          }
+          else
+          {
+            Stan = Cosinus;
+          }
           a = 0;
           show = false;
           Display();
         }
         else if(customKey=='B')
         {
-          Stan = Cosinus;
+          modeTgCtg = !modeTgCtg;
+          if(modeTgCtg)
+          {
+            Stan = Tangens;
+          }
+          else
+          {
+            Stan = Cotangens;
+          }
           a = 0;
           show = false;
           Display();
         }
         else if(customKey=='C')
         {
-          Stan = Tangens;
-          a = 0;
-          show = false;
           Display();
         }
         else if(customKey=='D')
         {
-          Stan = Cotangens;
-          a = 0;
-          show = false;
           Display();
         }
-       /* if(millis()-lastDisplay>150)
-        {
-             Display();
-             lastDisplay = millis();
-        }*/
 }
 void Display()
 {
@@ -182,7 +186,7 @@ void Display()
     {
      lcd.setCursor(0,1);
     }
-    if(b==SINCOSMAX||b==SINCOSMIN||b==SINCOSMIN)
+    if(b==SINCOSMAX||b==SINCOSMIN)
       {
          lcd.print(b);
       }
@@ -234,9 +238,7 @@ float sinus(unsigned long degree)
 {
     if(degree%180==90)
     {
-      if((degree/180)%2==1)
-        return -1;
-      return 1;
+      return (degree/180)%2==1 ? -1: 1;
     }
     else if(degree%180==0)
     {
@@ -245,69 +247,55 @@ float sinus(unsigned long degree)
     if(degree/180%2==0)
     { 
         degree = degree % 180;
-        float x = degree * 3.14159265359 / 180;
+        float x = convertToRad(degree);
         return (x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
     else
     {
         degree = degree % 180;
-        float x = degree * 3.14159265359 / 180;
+        float x = convertToRad(degree);
         return -(x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
 }
 float cosinus(unsigned long degree)
 {
-
     if(degree%180==90)
     {
       return 0;
     }
     else if(degree%180==0)
     {
-      if((degree/180)%2==0)
-        return 1;
-      return -1;
+      return (degree/180)%2==0 ? 1: -1;
     }
     degree = degree % 360;
     if(degree>180)
     {
-       float x = (degree - 180) * 3.14159265359 / 180;
+       float x = convertToRad(degree-180);
        x = 1-(pow(x,2)/2)+(pow(x,4)/24)-(pow(x,6)/720)+(pow(x,8)/40320)-(pow(x,10)/3628800)+(pow(x,12)/479001600)-(pow(x,14)/87178291200)+(pow(x,16)/20922789888000)-(pow(x,18)/6402373705728000)+(pow(x,20)/2432902008176640000)-(pow(x,22)/1124000727777607680000);
        return -x;
     }
     else
     {
-       float x = degree * 3.14159265359 / 180;
+       float x = convertToRad(degree);
        x = 1-(pow(x,2)/2)+(pow(x,4)/24)-(pow(x,6)/720)+(pow(x,8)/40320)-(pow(x,10)/3628800)+(pow(x,12)/479001600)-(pow(x,14)/87178291200)+(pow(x,16)/20922789888000)-(pow(x,18)/6402373705728000)+(pow(x,20)/2432902008176640000)-(pow(x,22)/1124000727777607680000);
        return x;
     }
-   
 }
 float tangens(unsigned long degree)
 {
   float x = sinus(degree)/cosinus(degree);
   x = abs(x);
-  if(degree%180<90)
-  {
-    return x;
-  }
-  else
-  {
-    return -x; 
-  }
+  return degree%180<90 ? x: -x;
 }
 float cotangens(unsigned long degree)
 {
   float x = cosinus(degree)/sinus(degree);
   x = abs(x);
-  if(degree%180<90)
-  {
-    return x;
-  }
-  else
-  {
-    return -x; 
-  }
+  return degree%180<90 ? x: -x;
+}
+float convertToRad(unsigned long x)
+{
+    return x * 3.14159265359 / 180;
 }
 int Length(unsigned long x)
 {
@@ -318,11 +306,9 @@ int Length(unsigned long x)
      x = x/10;
   }
   while(x!=0);
-
   return l;
 }
 float FractPart(float b)
 {
-  Serial.println(b-(int)b);
   return b-(int)b;
 }
