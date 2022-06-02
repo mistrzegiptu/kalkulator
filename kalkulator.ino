@@ -6,7 +6,6 @@ const byte ROWS = 4;
 const byte COLS = 4; 
 
 const float SINCOSMAX = 1;
-const float SINCOSZERO = 0;
 const float SINCOSMIN = -1;
 
 char hexaKeys[ROWS][COLS] = {
@@ -24,13 +23,16 @@ Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS)
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 unsigned long a = 0;
+unsigned long fractional = 0;
 unsigned long count = 0;
 unsigned int lastDisplay = 0;
 
 float b = 0;
+
 bool show = false;
 bool modeSinCos = false;
 bool modeTgCtg = false;
+bool point = false;
 
 enum state
 {
@@ -55,13 +57,26 @@ void loop()
         char customKey = customKeypad.getKey();
         if (customKey=='1'||customKey=='2'||customKey=='3'||customKey=='4'||customKey=='5'||customKey=='6'||customKey=='7'||customKey=='8'||customKey=='9'||customKey=='0')
         {
-           a = a * 10 + (customKey-'0');
-           Display();
+            if(show)
+            {
+              show = false;
+            }
+            if(!point)
+                a = a * 10 + (customKey-'0');
+            else
+                fractional = fractional * 10 + (customKey-'0');
+            Display();
         }
         else if(customKey=='*')
         {
            if(show)
               show = false;
+           else if(fractional != 0)
+           {
+            fractional = fractional / 10;
+           }
+           else if(point)
+              point = false;
            else if(a!=0)
            {
               a = a / 10;
@@ -70,14 +85,56 @@ void loop()
            {
                Stan = None;
                show = false;
+               modeSinCos = false;
+               modeTgCtg = false;
            }
            Display();
         }
-        else if(customKey=='#')
+        else if(customKey=='A')
+        {
+          modeSinCos = !modeSinCos;
+          modeTgCtg = false;
+          if(modeSinCos)
+          {
+             Stan = Sinus;            
+          }
+          else
+          {
+            Stan = Cosinus;
+          }
+          a = 0;
+          fractional = 0;
+          point = false;
+          show = false;
+          Display();
+        }
+        else if(customKey=='B')
+        {
+          modeTgCtg = !modeTgCtg;
+          modeSinCos = false;
+          if(modeTgCtg)
+          {
+            Stan = Tangens;
+          }
+          else
+          {
+            Stan = Cotangens;
+          }
+          a = 0;
+          fractional = 0;
+          point = false;
+          show = false;
+          Display();
+        }
+        else if(customKey=='C')
+        {
+          Display();
+        }
+        else if(customKey=='D')
         {
           if(Stan==Sinus)
           {
-               b = sinus(a);
+               b = sinus(a, fractional);
                show = true;
           }
           else if(Stan == Cosinus)
@@ -112,46 +169,13 @@ void loop()
           }
           Display();
         }
-        else if(customKey=='A')
+        else if(customKey=='#')
         {
-          modeSinCos = !modeSinCos;
-          if(modeSinCos)
-          {
-             Stan = Sinus;            
-          }
-          else
-          {
-            Stan = Cosinus;
-          }
-          a = 0;
-          show = false;
-          Display();
-        }
-        else if(customKey=='B')
-        {
-          modeTgCtg = !modeTgCtg;
-          if(modeTgCtg)
-          {
-            Stan = Tangens;
-          }
-          else
-          {
-            Stan = Cotangens;
-          }
-          a = 0;
-          show = false;
-          Display();
-        }
-        else if(customKey=='C')
-        {
-          Display();
-        }
-        else if(customKey=='D')
-        {
+          point = true;
           Display();
         }
 }
-void Display()
+void Display() //Function for displaying everything on lcd screen
 {
   lcd.clear();
   lcd.setCursor(0,0);
@@ -159,24 +183,28 @@ void Display()
   {
     lcd.print("sin(");
     lcd.print(a);
+    checkForPoint();
     lcd.print(")");
   }
   else if(Stan == Cosinus)
   {
     lcd.print("cos(");
     lcd.print(a);
+    checkForPoint();
     lcd.print(")");
   }
   else if(Stan == Tangens)
   {
     lcd.print("tan(");
     lcd.print(a);
+    checkForPoint();
     lcd.print(")");
   }
   else if(Stan == Cotangens)
   {
     lcd.print("ctg(");
     lcd.print(a);
+    checkForPoint();
     lcd.print(")");
   }
   if(show)
@@ -234,26 +262,36 @@ void Display()
       }
     }
 }
-float sinus(unsigned long degree)
+void checkForPoint()
 {
-    if(degree%180==90)
+  if(point)
+  {
+    lcd.print(",");
+    if(fractional!=0)
+      lcd.print(fractional);
+  }
+}
+///// TAYLOR SERIES FOR TRIG FUNCIONS
+float sinus(unsigned long degree, unsigned long f)
+{
+    if(degree%180==90&&f==0)
     {
       return (degree/180)%2==1 ? -1: 1;
     }
-    else if(degree%180==0)
+    else if(degree%180==0&&f==0)
     {
       return 0;
     }
     if(degree/180%2==0)
     { 
         degree = degree % 180;
-        float x = convertToRad(degree);
+        float x = convertToRad(degree, f);
         return (x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
     else
     {
         degree = degree % 180;
-        float x = convertToRad(degree);
+        float x = convertToRad(degree, f);
         return -(x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
 }
@@ -283,21 +321,26 @@ float cosinus(unsigned long degree)
 }
 float tangens(unsigned long degree)
 {
-  float x = sinus(degree)/cosinus(degree);
+  float x = sinus(degree,0)/cosinus(degree);
   x = abs(x);
   return degree%180<90 ? x: -x;
 }
 float cotangens(unsigned long degree)
 {
-  float x = cosinus(degree)/sinus(degree);
+  float x = cosinus(degree)/sinus(degree,0);
   x = abs(x);
   return degree%180<90 ? x: -x;
 }
+//// USEFULL FUNCIONS FOR DISPLAYING NUMBERS ON THE SCREEN
 float convertToRad(unsigned long x)
 {
     return x * 3.14159265359 / 180;
 }
-int Length(unsigned long x)
+float convertToRad(unsigned long x, unsigned long f)
+{
+    return ((float)x + ((float)f/pow(10,Length(f)))) * 3.14159265359 / 180;
+}
+int Length(unsigned long x) //Function returns a length of number
 {
   int l = 0;
   do 
@@ -308,7 +351,7 @@ int Length(unsigned long x)
   while(x!=0);
   return l;
 }
-float FractPart(float b)
+float FractPart(float b) //Function returns what follows the decimal point
 {
   return b-(int)b;
 }
