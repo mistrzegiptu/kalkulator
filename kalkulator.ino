@@ -64,7 +64,12 @@ void loop()
             if(!point)
                 a = a * 10 + (customKey-'0');
             else
-                fractional = fractional * 10 + (customKey-'0');
+            {
+              if(fractional*10+(customKey-'0')<=999)
+                  fractional = fractional * 10 + (customKey-'0');
+              else
+                  fractional = 999;
+            }
             Display();
         }
         else if(customKey=='*')
@@ -139,14 +144,14 @@ void loop()
           }
           else if(Stan == Cosinus)
           {
-               b = cosinus(a);
+               b = cosinus(a, fractional);
                show = true;
           }
           else if(Stan == Tangens)
           {
             if(a%180!=90)
             {
-              b = tangens(a);
+              b = tangens(a, fractional);
               show = true;
             }
             else
@@ -158,7 +163,7 @@ void loop()
           {
             if(a%180!=0)
             {
-              b = cotangens(a);
+              b = cotangens(a, fractional);
               show = true;
             }
             else
@@ -210,7 +215,7 @@ void Display() //Function for displaying everything on lcd screen
   if(show)
   {
     lcd.print("=");
-    if(Length(a)>5)
+    if(Length(a)+Length(fractional)>4)
     {
      lcd.setCursor(0,1);
     }
@@ -267,8 +272,7 @@ void checkForPoint()
   if(point)
   {
     lcd.print(",");
-    if(fractional!=0)
-      lcd.print(fractional);
+    lcd.print(fractional);
   }
 }
 ///// TAYLOR SERIES FOR TRIG FUNCIONS
@@ -295,47 +299,43 @@ float sinus(unsigned long degree, unsigned long f)
         return -(x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
 }
-float cosinus(unsigned long degree)
+float cosinus(unsigned long degree, unsigned long f)
 {
-    if(degree%180==90)
+    if(degree%180==90&&f==0)
     {
       return 0;
     }
-    else if(degree%180==0)
+    else if(degree%180==0&&f==0)
     {
       return (degree/180)%2==0 ? 1: -1;
     }
     degree = degree % 360;
     if(degree>180)
     {
-       float x = convertToRad(degree-180);
+       float x = convertToRad(degree-180,f);
        x = 1-(pow(x,2)/2)+(pow(x,4)/24)-(pow(x,6)/720)+(pow(x,8)/40320)-(pow(x,10)/3628800)+(pow(x,12)/479001600)-(pow(x,14)/87178291200)+(pow(x,16)/20922789888000)-(pow(x,18)/6402373705728000)+(pow(x,20)/2432902008176640000)-(pow(x,22)/1124000727777607680000);
        return -x;
     }
     else
     {
-       float x = convertToRad(degree);
+       float x = convertToRad(degree,f);
        x = 1-(pow(x,2)/2)+(pow(x,4)/24)-(pow(x,6)/720)+(pow(x,8)/40320)-(pow(x,10)/3628800)+(pow(x,12)/479001600)-(pow(x,14)/87178291200)+(pow(x,16)/20922789888000)-(pow(x,18)/6402373705728000)+(pow(x,20)/2432902008176640000)-(pow(x,22)/1124000727777607680000);
        return x;
     }
 }
-float tangens(unsigned long degree)
+float tangens(unsigned long degree, unsigned long f)
 {
-  float x = sinus(degree,0)/cosinus(degree);
+  float x = sinus(degree,f)/cosinus(degree,f);
   x = abs(x);
   return degree%180<90 ? x: -x;
 }
-float cotangens(unsigned long degree)
+float cotangens(unsigned long degree, unsigned long f)
 {
-  float x = cosinus(degree)/sinus(degree,0);
+  float x = cosinus(degree,f)/sinus(degree,f);
   x = abs(x);
   return degree%180<90 ? x: -x;
 }
 //// USEFULL FUNCIONS FOR DISPLAYING NUMBERS ON THE SCREEN
-float convertToRad(unsigned long x)
-{
-    return x * 3.14159265359 / 180;
-}
 float convertToRad(unsigned long x, unsigned long f)
 {
     return ((float)x + ((float)f/pow(10,Length(f)))) * 3.14159265359 / 180;
