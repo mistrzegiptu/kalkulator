@@ -335,6 +335,34 @@ float cotangens(unsigned long degree, unsigned long f)
   x = abs(x);
   return degree%180<90 ? x: -x;
 }
+float atangens(float value)
+{
+    float x = value, xx;
+    float a0=1.0,
+    a1 = 0.33288950512027,
+    a2 = -0.08467922817644,
+    a3 = 0.03252232640125,
+    a4 = -0.00749305860992;
+    if(x>=1)
+    {
+        xx = pow(1/x,2);
+        return PI/2-(1/x)/poly(xx,a0,a1,a2,a3,a4);
+    }
+    else if(x<=-1)
+    {
+        xx = pow(1/x,2);
+        return -(PI/2-(1/x))/poly(xx,a0,a1,a2,a3,a4);
+    }
+    else
+    {
+        xx = pow(x,2);
+        return x / poly(xx,a0,a1,a2,a3,a4);
+    }
+}
+float poly(float x, float a0, float a1, float a2, float a3, float a4)
+{
+    return a0+(a1+(a2+(a3+a4*x)*x)*x)*x;
+}
 //// USEFULL FUNCIONS FOR DISPLAYING NUMBERS ON THE SCREEN
 float convertToRad(unsigned long x, unsigned long f)
 {
