@@ -7,6 +7,7 @@ const byte COLS = 4;
 
 const float SINCOSMAX = 1;
 const float SINCOSMIN = -1;
+const float PInum = 3.14159265359;
 
 char hexaKeys[ROWS][COLS] = {
   {'1', '2', '3', 'A'},
@@ -34,12 +35,18 @@ bool modeSinCos = false;
 bool modeTgCtg = false;
 bool point = false;
 
+int arcusState=0;
+
 enum state
 {
   Cosinus,
   Sinus,
   Tangens,
   Cotangens,
+  Asinus,
+  Acosinus,
+  Atangens,
+  Acotangens,
   None
 };
 
@@ -76,12 +83,15 @@ void loop()
         {
            if(show)
               show = false;
-           else if(fractional != 0)
+           else if(fractional > 9)
            {
-            fractional = fractional / 10;
+              fractional = fractional / 10;
            }
            else if(point)
-              point = false;
+           {
+                point = false;
+                fractional = 0;
+           }
            else if(a!=0)
            {
               a = a / 10;
@@ -92,6 +102,7 @@ void loop()
                show = false;
                modeSinCos = false;
                modeTgCtg = false;
+               arcusState = 0;
            }
            Display();
         }
@@ -99,6 +110,7 @@ void loop()
         {
           modeSinCos = !modeSinCos;
           modeTgCtg = false;
+          arcusState = 0;
           if(modeSinCos)
           {
              Stan = Sinus;            
@@ -117,6 +129,7 @@ void loop()
         {
           modeTgCtg = !modeTgCtg;
           modeSinCos = false;
+          arcusState = 0;
           if(modeTgCtg)
           {
             Stan = Tangens;
@@ -133,6 +146,32 @@ void loop()
         }
         else if(customKey=='C')
         {
+          arcusState++;
+          if(arcusState>4)
+          {
+            arcusState=1;
+          }
+          switch(arcusState)
+          {
+            case 1:
+              Stan = Asinus;
+              break;
+            case 2:
+              Stan = Acosinus;
+              break;
+            case 3:
+              Stan = Atangens;
+              break;
+            case 4:
+              Stan = Acotangens;
+              break;
+          }
+          a = 0;
+          fractional = 0;
+          modeTgCtg = false;
+          modeSinCos = false;
+          point = false;
+          show = false;
           Display();
         }
         else if(customKey=='D')
@@ -172,6 +211,40 @@ void loop()
             }
             
           }
+          else if(Stan == Asinus)
+          {
+            if(a==0||a==1&&b==0)
+            {
+              b = RadToDeg(asinus(a+fractional/pow(10,Length(fractional))));
+              show = true;
+            }
+            else
+            {
+              show = false;
+            }
+          }
+          else if(Stan==Acosinus)
+          {
+            if(a==0||a==1&&b==0)
+            {
+              b = RadToDeg(acosinus(a+fractional/pow(10,Length(fractional))));
+              show = true;
+            }
+            else
+            {
+              show = false;
+            }
+          }
+          else if(Stan == Atangens)
+          {
+              b = RadToDeg(atangens(a+fractional/pow(10,Length(fractional))));
+              show = true;
+          }
+          else if(Stan==Acotangens)
+          {
+            b = RadToDeg(acotangens(a+fractional/pow(10,Length(fractional))));
+            show = true;
+          }
           Display();
         }
         else if(customKey=='#')
@@ -208,6 +281,34 @@ void Display() //Function for displaying everything on lcd screen
   else if(Stan == Cotangens)
   {
     lcd.print("ctg(");
+    lcd.print(a);
+    checkForPoint();
+    lcd.print(")");
+  }
+  else if(Stan == Asinus)
+  {
+    lcd.print("asin(");
+    lcd.print(a);
+    checkForPoint();
+    lcd.print(")");
+  }
+  else if(Stan == Acosinus)
+  {
+    lcd.print("acos(");
+    lcd.print(a);
+    checkForPoint();
+    lcd.print(")");
+  }
+  else if(Stan == Atangens)
+  {
+    lcd.print("atan(");
+    lcd.print(a);
+    checkForPoint();
+    lcd.print(")");
+  }
+  else if(Stan == Acotangens)
+  {
+    lcd.print("acot(");
     lcd.print(a);
     checkForPoint();
     lcd.print(")");
@@ -272,7 +373,8 @@ void checkForPoint()
   if(point)
   {
     lcd.print(",");
-    lcd.print(fractional);
+    if(fractional!=0)
+      lcd.print(fractional);
   }
 }
 ///// TAYLOR SERIES FOR TRIG FUNCIONS
@@ -335,6 +437,15 @@ float cotangens(unsigned long degree, unsigned long f)
   x = abs(x);
   return degree%180<90 ? x: -x;
 }
+///// HORNER'S FORMULAS FOR ARCUS FUNCTION (HORNER>>>TAYLOR)
+float asinus(float value)
+{
+    return atangens(value/sqrt(1-pow(value,2)));
+}
+float acosinus(float value)
+{
+    return PInum/2-asinus(value);
+}
 float atangens(float value)
 {
     float x = value, xx;
@@ -346,18 +457,22 @@ float atangens(float value)
     if(x>=1)
     {
         xx = pow(1/x,2);
-        return PI/2-(1/x)/poly(xx,a0,a1,a2,a3,a4);
+        return PInum/2-(1/x)/poly(xx,a0,a1,a2,a3,a4);
     }
     else if(x<=-1)
     {
         xx = pow(1/x,2);
-        return -(PI/2-(1/x))/poly(xx,a0,a1,a2,a3,a4);
+        return -(PInum/2-(1/x))/poly(xx,a0,a1,a2,a3,a4);
     }
     else
     {
         xx = pow(x,2);
         return x / poly(xx,a0,a1,a2,a3,a4);
     }
+}
+float acotangens(float value)
+{
+    return atangens(1/value);
 }
 float poly(float x, float a0, float a1, float a2, float a3, float a4)
 {
@@ -382,4 +497,8 @@ int Length(unsigned long x) //Function returns a length of number
 float FractPart(float b) //Function returns what follows the decimal point
 {
   return b-(int)b;
+}
+float RadToDeg(float rad)
+{
+   return rad * 180 / PInum;
 }
