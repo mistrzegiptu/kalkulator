@@ -15,16 +15,16 @@ char hexaKeys[ROWS][COLS] = {
   {'7', '8', '9', 'C'},
   {'*', '0', '#', 'D'}
 };
-char degreeChar[8]
+byte degreeChar[8]
 {
-  0b00111,
-  0b00101,
-  0b00111,
-  0b00000,
-  0b00000,
-  0b00000,
-  0b00000,
-  0b00000
+  B00111,
+  B00101,
+  B00111,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000
 };
 
 byte rowPins[ROWS] = {9, 8, 7, 6}; 
@@ -335,7 +335,7 @@ void Display()
         }
         lcd.print(displaying[i]);
       }
-      if(show&&Stan==Asinus||Stan==Acosinus||Stan==Atangens||Stan==Acotangens)
+      if(show&&(Stan==Asinus||Stan==Acosinus||Stan==Atangens||Stan==Acotangens))
       {
          lcd.write((byte)0);
       }
