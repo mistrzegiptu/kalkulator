@@ -15,6 +15,17 @@ char hexaKeys[ROWS][COLS] = {
   {'7', '8', '9', 'C'},
   {'*', '0', '#', 'D'}
 };
+char degreeChar[8]
+{
+  0b00111,
+  0b00101,
+  0b00111,
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000
+};
 
 byte rowPins[ROWS] = {9, 8, 7, 6}; 
 byte colPins[COLS] = {5, 4, 3, 2}; 
@@ -23,8 +34,7 @@ Keypad customKeypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS)
 
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
-long a = 0;
-unsigned long fractional = 0;
+unsigned long a = 0;
 unsigned long count = 0;
 unsigned int lastDisplay = 0;
 
@@ -36,6 +46,8 @@ bool minus = false;
 
 int trigState=0;
 int arcusState=0;
+
+String fractional = "";
 
 enum state
 {
@@ -58,6 +70,7 @@ void setup()
     lcd.begin();
     lcd.backlight();
     lcd.clear();
+    lcd.createChar(0,degreeChar);
 }
 void loop()
 {
@@ -72,10 +85,8 @@ void loop()
                 a = a * 10 + (customKey-'0');
             else
             {
-              if(fractional*10+(customKey-'0')<=999)
-                  fractional = fractional * 10 + (customKey-'0');
-              else
-                  fractional = 999;
+              if(fractional.length() < 3)
+                  fractional.concat(customKey);
             }
             Display();
         }
@@ -83,14 +94,14 @@ void loop()
         {
            if(show)
               show = false;
-           else if(fractional > 9)
+           else if(fractional!="")
            {
-              fractional = fractional / 10;
+              fractional.remove(fractional.length()-1);
            }
            else if(point)
            {
                 point = false;
-                fractional = 0;
+                fractional = "";
            }
            else if(a!=0)
            {
@@ -129,7 +140,7 @@ void loop()
               break;
           }
           a = 0;
-          fractional = 0;
+          fractional = "";
           arcusState = 0;
           point = false;
           show = false;
@@ -159,7 +170,7 @@ void loop()
               break;
           }
           a = 0;
-          fractional = 0;
+          fractional = "";
           trigState = 0;
           point = false;
           show = false;
@@ -175,21 +186,21 @@ void loop()
         {
           if(Stan==Sinus)
           {
-               result = sinus(a, fractional);
+               result = sinus(a, StringToFloat(fractional));
                if(minus)
                   result = -result;
                show = true;
           }
           else if(Stan == Cosinus)
           {
-               result = cosinus(a, fractional);
+               result = cosinus(a, StringToFloat(fractional));
                show = true;
           }
           else if(Stan == Tangens)
           {
-            if(a%180!=90||a%180==90&&fractional!=0)
+            if(a%180!=90||a%180==90&&StringToFloat(fractional)!=0)
             {
-              result = tangens(a, fractional);
+              result = tangens(a, StringToFloat(fractional));
               if(minus)
                   result = -result;
               show = true;
@@ -201,9 +212,9 @@ void loop()
           }
           else if(Stan == Cotangens)
           {
-            if(a%180!=0||a%180==0&&fractional!=0)
+            if(a%180!=0||a%180==0&&StringToFloat(fractional)!=0)
             {
-              result = cotangens(a, fractional);
+              result = cotangens(a, StringToFloat(fractional));
               if(minus)
                   result = -result;
               show = true;
@@ -216,9 +227,9 @@ void loop()
           }
           else if(Stan == Asinus)
           {
-            if(a==0||a==1&&fractional==0)
+            if(a==0||a==1&&StringToFloat(fractional)==0)
             {
-              result = RadToDeg(asinus(a+fractional/pow(10,Length(fractional))));
+              result = RadToDeg(asinus(a+StringToFloat(fractional)));
               if(minus)
                   result = -result;
               show = true;
@@ -230,15 +241,15 @@ void loop()
           }
           else if(Stan==Acosinus)
           {
-            if(a==0||a==1&&fractional==0)
+            if(a==0||a==1&&StringToFloat(fractional)==0)
             {
               if(minus)
               {
-                  result = 180-RadToDeg(acosinus(a+fractional/pow(10,Length(fractional))));
+                  result = 180-RadToDeg(acosinus(a+StringToFloat(fractional)));
               }
               else
               {
-                result = RadToDeg(acosinus(a+fractional/pow(10,Length(fractional))));
+                result = RadToDeg(acosinus(a+StringToFloat(fractional)));
               }
               show = true;
             }
@@ -249,17 +260,17 @@ void loop()
           }
           else if(Stan == Atangens)
           {
-              result = RadToDeg(atangens(a+fractional/pow(10,Length(fractional))));
+              result = RadToDeg(atangens(a+StringToFloat(fractional)));
               if(minus)
                   result = -result;
               show = true;
           }
           else if(Stan==Acotangens)
           {
-            result = RadToDeg(acotangens(a+fractional/pow(10,Length(fractional))));
+            result = RadToDeg(acotangens(a+StringToFloat(fractional)));
             if(minus)
             {
-                result = RadToDeg(PInum-acotangens(a+fractional/pow(10,Length(fractional))));
+                result = RadToDeg(PInum-acotangens(a+StringToFloat(fractional)));
             }
             show = true;
           }
@@ -271,111 +282,67 @@ void loop()
           Display();
         }
 }
-void Display() //Function for displaying everything on lcd screen
+void Display()
 {
+  String displaying = "";
   lcd.clear();
   lcd.setCursor(0,0);
   switch(Stan)
   {
     case Sinus:
-      lcd.print("sin(");
+      displaying.concat("sin(");
       break;
     case Cosinus:
-      lcd.print("cos(");
+      displaying.concat("cos(");
       break;
     case Tangens:
-      lcd.print("tan(");
+      displaying.concat("tan(");
       break;
     case Cotangens:
-      lcd.print("cot(");
+      displaying.concat("cot(");
       break;
     case Asinus:
-      lcd.print("asin(");
+      displaying.concat("asin(");
       break;
     case Acosinus:
-      lcd.print("acos(");
+      displaying.concat("acos(");
       break;
     case Atangens:
-      lcd.print("atan(");
+      displaying.concat("atan(");
       break;
     case Acotangens:
-      lcd.print("acot(");
+      displaying.concat("acot(");
       break;
   }
   if(Stan!=None)
   {
-    if(minus)
-      lcd.print("-");
-    lcd.print(a);
-    checkForPoint();
-    lcd.print(")");
-  }
-  if(show)
-  {
-    lcd.print("=");
-    if(trigState!=0&&Length(a)+Length(fractional)>4||arcusState!=0&&Length(a)+Length(fractional)>3)
-    {
-      lcd.setCursor(0,1);
-    }
-    if(result==SINCOSMAX||result==SINCOSMIN)
+      if(minus)
+        displaying.concat("-");
+      displaying.concat(a);
+      if(point)
+        displaying.concat(".");
+        displaying.concat(fractional);
+      if(show)
       {
-         lcd.print(result);
+        displaying.concat(")=");
+        displaying.concat(result);
       }
-      else if(result>1)
+      for(int i = 0; i < displaying.length(); i++)
       {
-          float fractPart = FractPart(result);
-          int f = result - fractPart;
-          lcd.print(f);
-          lcd.print(".");
-          if(fractPart<0.1)
-          {
-            lcd.print("0");
-          }
-          int fract = fractPart*1000;
-          lcd.print(fract);
-      }
-      else if(result<-1)
-      {
-          lcd.print("-");
-          float fractPart = FractPart(result);
-          int f = result + fractPart;
-          lcd.print(abs(f));
-          lcd.print(".");
-          int fract = fractPart*1000;
-          lcd.print(abs(fract));
-      }
-      else
-      {
-        if(result<0)
+        if(i==16)
         {
-          lcd.print("-0.");
-          if(result>-0.1)
-            lcd.print("0");
-          int x = abs(result) * 1000;
-          lcd.print(x);
+          lcd.setCursor(0,1);
         }
-        else
-        {
-            lcd.print("0.");
-            if(result<0.1)
-              lcd.print("0");
-            int x = result * 1000;
-            lcd.print(x);
-        }
+        lcd.print(displaying[i]);
       }
-    }
-}
-void checkForPoint()
-{
-  if(point)
-  {
-    lcd.print(",");
-    if(fractional!=0)
-      lcd.print(fractional);
+      if(show&&Stan==Asinus||Stan==Acosinus||Stan==Atangens||Stan==Acotangens)
+      {
+         lcd.write((byte)0);
+      }
   }
 }
 ///// TAYLOR SERIES FOR TRIG FUNCIONS
-float sinus(unsigned long degree, unsigned long f)
+float sinus(unsigned long degree, float f)
 {
     if(degree%180==90&&f==0)
     {
@@ -388,17 +355,17 @@ float sinus(unsigned long degree, unsigned long f)
     if(degree/180%2==0)
     { 
         degree = degree % 180;
-        float x = convertToRad(degree, f);
+        float x = convertToRad(degree+f);
         return (x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
     else
     {
         degree = degree % 180;
-        float x = convertToRad(degree, f);
+        float x = convertToRad(degree+f);
         return -(x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
 }
-float cosinus(unsigned long degree, unsigned long f)
+float cosinus(unsigned long degree, float f)
 {
     if(degree%180==90&&f==0)
     {
@@ -415,25 +382,24 @@ float cosinus(unsigned long degree, unsigned long f)
     degree = degree % 360;
     if(degree>180)
     {
-       float x = convertToRad(degree-180,f);
+       float x = convertToRad(degree-180+f);
        x = 1-(pow(x,2)/2)+(pow(x,4)/24)-(pow(x,6)/720)+(pow(x,8)/40320)-(pow(x,10)/3628800)+(pow(x,12)/479001600)-(pow(x,14)/87178291200)+(pow(x,16)/20922789888000)-(pow(x,18)/6402373705728000)+(pow(x,20)/2432902008176640000)-(pow(x,22)/1124000727777607680000);
        return -x;
     }
     else
     {
-       float x = convertToRad(degree,f);
+       float x = convertToRad(degree+f);
        x = 1-(pow(x,2)/2)+(pow(x,4)/24)-(pow(x,6)/720)+(pow(x,8)/40320)-(pow(x,10)/3628800)+(pow(x,12)/479001600)-(pow(x,14)/87178291200)+(pow(x,16)/20922789888000)-(pow(x,18)/6402373705728000)+(pow(x,20)/2432902008176640000)-(pow(x,22)/1124000727777607680000);
        return x;
     }
 }
-float tangens(unsigned long degree, unsigned long f)
+float tangens(unsigned long degree, float f)
 {
   float x = sinus(degree,f)/cosinus(degree,f);
   x = abs(x);
-  Serial.println(RadToDeg(x));
   return degree%180<90 ? x: -x;
 }
-float cotangens(unsigned long degree, unsigned long f)
+float cotangens(unsigned long degree, float f)
 {
   float x = cosinus(degree,f)/sinus(degree,f);
   x = abs(x);
@@ -483,26 +449,18 @@ float poly(float x, float a0, float a1, float a2, float a3, float a4)
     return a0+(a1+(a2+(a3+a4*x)*x)*x)*x;
 }
 //// USEFULL FUNCIONS FOR DISPLAYING NUMBERS ON THE SCREEN
-float convertToRad(unsigned long x, unsigned long f)
+float convertToRad(float x)
 {
-    return ((float)x + ((float)f/pow(10,Length(f)))) * 3.14159265359 / 180;
-}
-int Length(unsigned long x) //Function returns a length of number
-{
-  int l = 0;
-  do 
-  {
-     l++;
-     x = x/10;
-  }
-  while(x!=0);
-  return l;
-}
-float FractPart(float b) //Function returns what follows the decimal point
-{
-  return b-(int)b;
+  return x * 3.14159265359 / 180;
 }
 float RadToDeg(float rad)
 {
    return rad * 180 / PInum;
+}
+float StringToFloat(String s)
+{
+  if(s==""||s.toInt()==0)
+    return 0;
+  else
+    return (float)s.toInt()/pow(10,s.length());
 }
