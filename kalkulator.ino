@@ -5,10 +5,6 @@
 const byte ROWS = 4; 
 const byte COLS = 4; 
 
-const float SINCOSMAX = 1;
-const float SINCOSMIN = -1;
-const float PInum = 3.14159265359;
-
 char hexaKeys[ROWS][COLS] = {
   {'1', '2', '3', 'A'},
   {'4', '5', '6', 'B'},
@@ -51,14 +47,14 @@ String fractional = "";
 
 enum state
 {
-  Cosinus,
-  Sinus,
-  Tangens,
-  Cotangens,
-  Asinus,
-  Acosinus,
-  Atangens,
-  Acotangens,
+  Cosine,
+  Sine,
+  Tangent,
+  Cotangent,
+  Asine,
+  Acosine,
+  Atangent,
+  Acotangent,
   None
 };
 
@@ -127,16 +123,16 @@ void loop()
           switch(trigState)
           {
             case 1:
-              Stan = Sinus;
+              Stan = Sine;
               break;
             case 2:
-              Stan = Cosinus;
+              Stan = Cosine;
               break;
             case 3:
-              Stan = Tangens;
+              Stan = Tangent;
               break;
             case 4:
-              Stan = Cotangens;
+              Stan = Cotangent;
               break;
           }
           a = 0;
@@ -157,16 +153,16 @@ void loop()
           switch(arcusState)
           {
             case 1:
-              Stan = Asinus;
+              Stan = Asine;
               break;
             case 2:
-              Stan = Acosinus;
+              Stan = Acosine;
               break;
             case 3:
-              Stan = Atangens;
+              Stan = Atangent;
               break;
             case 4:
-              Stan = Acotangens;
+              Stan = Acotangent;
               break;
           }
           a = 0;
@@ -184,23 +180,23 @@ void loop()
         }
         else if(customKey=='D')
         {
-          if(Stan==Sinus)
+          if(Stan==Sine)
           {
-               result = sinus(a, StringToFloat(fractional));
+               result = sine(a, StringToFloat(fractional));
                if(minus)
                   result = -result;
                show = true;
           }
-          else if(Stan == Cosinus)
+          else if(Stan == Cosine)
           {
-               result = cosinus(a, StringToFloat(fractional));
+               result = cosine(a, StringToFloat(fractional));
                show = true;
           }
-          else if(Stan == Tangens)
+          else if(Stan == Tangent)
           {
             if(a%180!=90||a%180==90&&StringToFloat(fractional)!=0)
             {
-              result = tangens(a, StringToFloat(fractional));
+              result = tangent(a, StringToFloat(fractional));
               if(minus)
                   result = -result;
               show = true;
@@ -210,11 +206,11 @@ void loop()
               show = false;
             }
           }
-          else if(Stan == Cotangens)
+          else if(Stan == Cotangent)
           {
             if(a%180!=0||a%180==0&&StringToFloat(fractional)!=0)
             {
-              result = cotangens(a, StringToFloat(fractional));
+              result = cotangent(a, StringToFloat(fractional));
               if(minus)
                   result = -result;
               show = true;
@@ -225,11 +221,11 @@ void loop()
             }
             
           }
-          else if(Stan == Asinus)
+          else if(Stan == Asine)
           {
             if(a==0||a==1&&StringToFloat(fractional)==0)
             {
-              result = RadToDeg(asinus(a+StringToFloat(fractional)));
+              result = RadToDeg(asine(a+StringToFloat(fractional)));
               if(minus)
                   result = -result;
               show = true;
@@ -239,17 +235,17 @@ void loop()
               show = false;
             }
           }
-          else if(Stan==Acosinus)
+          else if(Stan==Acosine)
           {
             if(a==0||a==1&&StringToFloat(fractional)==0)
             {
               if(minus)
               {
-                  result = 180-RadToDeg(acosinus(a+StringToFloat(fractional)));
+                  result = 180-RadToDeg(acosine(a+StringToFloat(fractional)));
               }
               else
               {
-                result = RadToDeg(acosinus(a+StringToFloat(fractional)));
+                result = RadToDeg(acosine(a+StringToFloat(fractional)));
               }
               show = true;
             }
@@ -258,19 +254,19 @@ void loop()
               show = false;
             }
           }
-          else if(Stan == Atangens)
+          else if(Stan == Atangent)
           {
-              result = RadToDeg(atangens(a+StringToFloat(fractional)));
+              result = RadToDeg(atangent(a+StringToFloat(fractional)));
               if(minus)
                   result = -result;
               show = true;
           }
-          else if(Stan==Acotangens)
+          else if(Stan==Acotangent)
           {
-            result = RadToDeg(acotangens(a+StringToFloat(fractional)));
+            result = RadToDeg(acotangent(a+StringToFloat(fractional)));
             if(minus)
             {
-                result = RadToDeg(PInum-acotangens(a+StringToFloat(fractional)));
+                result = RadToDeg(PInum-acotangent(a+StringToFloat(fractional)));
             }
             show = true;
           }
@@ -289,28 +285,28 @@ void Display()
   lcd.setCursor(0,0);
   switch(Stan)
   {
-    case Sinus:
+    case Sine:
       displaying.concat("sin(");
       break;
-    case Cosinus:
+    case Cosine:
       displaying.concat("cos(");
       break;
-    case Tangens:
+    case Tangent:
       displaying.concat("tan(");
       break;
-    case Cotangens:
+    case Cotangent:
       displaying.concat("cot(");
       break;
-    case Asinus:
+    case Asine:
       displaying.concat("asin(");
       break;
-    case Acosinus:
+    case Acosine:
       displaying.concat("acos(");
       break;
-    case Atangens:
+    case Atangent:
       displaying.concat("atan(");
       break;
-    case Acotangens:
+    case Acotangent:
       displaying.concat("acot(");
       break;
   }
@@ -335,14 +331,14 @@ void Display()
         }
         lcd.print(displaying[i]);
       }
-      if(show&&(Stan==Asinus||Stan==Acosinus||Stan==Atangens||Stan==Acotangens))
+      if(show&&(Stan==Asine||Stan==Acosine||Stan==Atangent||Stan==Acotangent))
       {
          lcd.write((byte)0);
       }
   }
 }
 ///// TAYLOR SERIES FOR TRIG FUNCIONS
-float sinus(unsigned long degree, float f)
+float sine(unsigned long degree, float f)
 {
     if(degree%180==90&&f==0)
     {
@@ -365,7 +361,7 @@ float sinus(unsigned long degree, float f)
         return -(x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
 }
-float cosinus(unsigned long degree, float f)
+float cosine(unsigned long degree, float f)
 {
     if(degree%180==90&&f==0)
     {
@@ -393,30 +389,30 @@ float cosinus(unsigned long degree, float f)
        return x;
     }
 }
-float tangens(unsigned long degree, float f)
+float tangent(unsigned long degree, float f)
 {
-  float x = sinus(degree,f)/cosinus(degree,f);
+  float x = sine(degree,f)/cosine(degree,f);
   x = abs(x);
   return degree%180<90 ? x: -x;
 }
-float cotangens(unsigned long degree, float f)
+float cotangent(unsigned long degree, float f)
 {
-  float x = cosinus(degree,f)/sinus(degree,f);
+  float x = cosine(degree,f)/sine(degree,f);
   x = abs(x);
   return degree%180<90 ? x: -x;
 }
 ///// HORNER'S FORMULAS FOR ARCUS FUNCTION (HORNER>>>TAYLOR)
-float asinus(float value)
+float asine(float value)
 {
     if(value==0.5)
         return 0.523598776;
-    return atangens(value/sqrt(1-pow(value,2)));
+    return atangent(value/sqrt(1-pow(value,2)));
 }
-float acosinus(float value)
+float acosine(float value)
 {
-    return PInum/2-asinus(value);
+    return PInum/2-asine(value);
 }
-float atangens(float value)
+float atangent(float value)
 {
     float x = value, xx;
     float a0=1.0,
@@ -440,9 +436,9 @@ float atangens(float value)
         return x / poly(xx,a0,a1,a2,a3,a4);
     }
 }
-float acotangens(float value)
+float acotangent(float value)
 {
-    return atangens(1/value);
+    return atangent(1/value);
 }
 float poly(float x, float a0, float a1, float a2, float a3, float a4)
 {
