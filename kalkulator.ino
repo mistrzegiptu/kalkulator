@@ -351,13 +351,13 @@ float sine(unsigned long degree, float f)
     if(degree/180%2==0)
     { 
         degree = degree % 180;
-        float x = convertToRad(degree+f);
+        float x = DegToRad(degree+f);
         return (x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
     else
     {
         degree = degree % 180;
-        float x = convertToRad(degree+f);
+        float x = DegToRad(degree+f);
         return -(x-(pow(x,3)/6)+(pow(x,5)/120)-(pow(x,7)/5040)+(pow(x,9)/362880)-(pow(x,11)/39916800)+(pow(x,13)/6227020800)-(pow(x,15)/1307674368000)+(pow(x,17)/355687428096000)-(pow(x,19)/121645100408832000)+(pow(x,21)/51090942171709440000)-(pow(x,23)/25852016738884976640000));
     }
 }
@@ -378,13 +378,13 @@ float cosine(unsigned long degree, float f)
     degree = degree % 360;
     if(degree>180)
     {
-       float x = convertToRad(degree-180+f);
+       float x = DegToRad(degree-180+f);
        x = 1-(pow(x,2)/2)+(pow(x,4)/24)-(pow(x,6)/720)+(pow(x,8)/40320)-(pow(x,10)/3628800)+(pow(x,12)/479001600)-(pow(x,14)/87178291200)+(pow(x,16)/20922789888000)-(pow(x,18)/6402373705728000)+(pow(x,20)/2432902008176640000)-(pow(x,22)/1124000727777607680000);
        return -x;
     }
     else
     {
-       float x = convertToRad(degree+f);
+       float x = DegToRad(degree+f);
        x = 1-(pow(x,2)/2)+(pow(x,4)/24)-(pow(x,6)/720)+(pow(x,8)/40320)-(pow(x,10)/3628800)+(pow(x,12)/479001600)-(pow(x,14)/87178291200)+(pow(x,16)/20922789888000)-(pow(x,18)/6402373705728000)+(pow(x,20)/2432902008176640000)-(pow(x,22)/1124000727777607680000);
        return x;
     }
@@ -445,7 +445,7 @@ float poly(float x, float a0, float a1, float a2, float a3, float a4)
     return a0+(a1+(a2+(a3+a4*x)*x)*x)*x;
 }
 //// USEFULL FUNCIONS FOR DISPLAYING NUMBERS ON THE SCREEN
-float convertToRad(float x)
+float DegToRad(float x)
 {
   return x * 3.14159265359 / 180;
 }

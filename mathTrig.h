@@ -1,18 +1,26 @@
-#pragma once
+#ifndef MATH_TRIG
+#define MATH_TRIG
+#include <math.h>
 
 //SOME CONST FOR CALCULATING TRIGONOMETRIC FUNCTIONS
-const float SINCOSMAX = 1;
-const float SINCOSMIN = -1;
-const float PInum = 3.14159265359;
+extern const float PInum;
+extern const float epsilon;
 
-//ARC FUNCTIONS THAT ARE CALCULATED WITH TAYLOR'S EXPANSION
-/*float sine(unsigned long degree, float f);
-float cosine(unsigned long degree, float f);
-float tangent(unsigned long degree, float f);
-float cotangent(unsigned long degree, float f);
+//TRIGONOMETRIC FUNCTIONS THAT ARE CALCULATED WITH TAYLOR'S EXPANSION
+float sine(float x);
+float cosine(float x);
+float tangent(float x);
+float cotangent(float x);
 
-//ARC FUNCTIONS THAT ARE CALCULATED WITH HORNER'S METHOD
-float asine(float value);
-float acosine(float value);
-float atangent(float value);
-float acotangent(float value);*/
+//ARC FUNCTIONS THAT ARE ALSO CALCULATED WITH TAYLOR'S EXPANSION
+float asine(float x);
+float acosine(float x);
+float atangent(float x);
+float acotangent(float x);
+
+float DegToRad(float x);
+float RadToDeg(float rad);
+float FMod(float x, float y);
+float FAbs(float x);
+
+#endif
